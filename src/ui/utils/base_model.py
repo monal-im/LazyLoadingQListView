@@ -36,3 +36,6 @@ class BaseModel(QtCore.QAbstractListModel):
 
     def columnCount(self, index):
         return 1
+    
+    def listView(self):
+        return self.parent

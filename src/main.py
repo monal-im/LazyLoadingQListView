@@ -1,10 +1,14 @@
 #!/usr/bin/env python3
 import sys
+import argparse
 from PyQt5 import QtWidgets
 
 from ui.main_window import MainWindow
 
-import logging
+import json, logging, logging.config
+with open("src/data/conf/logger.json", 'r') as logging_configuration_file:
+        logger_config = json.load(logging_configuration_file)
+logging.config.dictConfig(logger_config)
 logger = logging.getLogger(__name__)
 logger.info('Logger configured...')
 
