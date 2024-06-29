@@ -13,7 +13,7 @@ class MainWindow(QtWidgets.QMainWindow):
         super().__init__()
 
         # load ui
-        uic.loadUi("src/ui/main_window.ui", self)
+        uic.loadUi("tests/ui/main_window.ui", self)
         self.uiWidget_listView.setVerticalScrollMode(QtWidgets.QAbstractItemView.ScrollPerPixel)
 
         # create ui items

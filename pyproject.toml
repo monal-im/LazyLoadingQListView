@@ -1,0 +1,22 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "LazyLoadingQListView_PS"
+version = "0.0.1"
+authors = [
+  { name="Patrick Schulze", email="patrick.schulze.ofp@gmail.com" },
+]
+description = "A proxy data model allowing to add Lazy Loading capabilities to any QListView and its Model"
+readme = "README.md"
+requires-python = ">=3.12"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+Homepage = "https://github.com/monal-im/LazyLoadingQListView"
+Issues = "https://github.com/monal-im/LazyLoadingQListView/issues"
