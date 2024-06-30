@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "LazyLoadingQListView_PS"
+name = "LazyLoadingQListView"
 version = "0.0.1"
 authors = [
   { name="Patrick Schulze", email="patrick.schulze.ofp@gmail.com" },

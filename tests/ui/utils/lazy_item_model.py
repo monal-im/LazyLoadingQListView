@@ -121,11 +121,11 @@ class LazyItemModel(QtCore.QAbstractProxyModel):
         return self.createIndex(row, column, parent)
     
     def mapFromSource(self, sourceIndex):
-        # from rawlog index to proxy index
+        # from real index to proxy index
         return self.createIndex(self.proxyData.getNextVisibleProxyRow(sourceIndex.row()), 0)
 
     def mapToSource(self, proxyIndex):
-        # from proxy index to rawlog index
+        # from proxy index to real index
         if not proxyIndex.isValid():
             return QtCore.QModelIndex()
         nextVisibleRow = self.proxyData.getNextVisibleRow(proxyIndex.row())
