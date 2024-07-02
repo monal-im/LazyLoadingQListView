@@ -4,41 +4,92 @@
 A proxy data model allowing to add Lazy Loading capabilities to any QListView and its Model
 
 ## Installation
-There are two ways to use the LazyItemModel.
+There are two ways to use the *LazyItemModel*.
 1. Install via pip
     ```
     pip install LazyLoadingQListView
     ```
-    By installing the LazyItemModel with pip, easy usage is guaranteed.
+    Installing the *LazyItemModel* with pip ensures easy use.
     ```python
     from LazyLoadingQListView import LazyItemModel
     ```
 
-
-2. Downloading from Github
+2. Download from Github
     [LazyLoadingQListView](https://github.com/monal-im/LazyLoadingQListView) 
-    By installing the code from github, it is possible to make additional changes, according to your needs.
+    By installing the code from Github it is possible to make further changes as needed.
 
 
-## Useage
-The *LazyItemModel* is nothing more than a proxy model, that changes dynamicly due to scrolling or by setting a range of items visbile by hand ([setVisible(start, end)](#setVisible)). The *LazyItemModel* can eather be installed via pip or by copying the code provided in this reposetory, if you want to make additional changes. To use the *LazyItemModel* you also need to create a *baseModel* and a *QListView*. The Models must be stacked as shown below:
+## Usage
+If you are processing large amounts of data that you want to display in a [*QListView*](https://doc.qt.io/qtforpython-5/PySide2/QtWidgets/QListView.html), or if you are adding large amounts of items to the [*QListView*](https://doc.qt.io/qtforpython-5/PySide2/QtWidgets/QListView.html) in a short period of time, you may experience long wait times. But this is not a problem of Python, specifically the problem is the time it takes Pyqt to create an uiItem. To solve this problem, we created the *LazyItemModel*. It creates the uiItems on demand through the UI, implements smooth scrolling in both directions and allows jumps with a simple implementation.
 
-<img src="https://github.com/monal-im/LazyLoadingQListView/assets/76741977/6ea8ef46-1651-44f6-b312-dd787e43bd2c" alt="Structure" width="400"/>
+1. Import the library
+    ```python
+    from LazyLoadingQListView import LazyItemModel
+    ```
 
-```python
-# configure models
-self.listView = QtWidgets.QListView()
-self.baseModel = BaseModel(items, self.listView)
-self.lazyItemModel = LazyItemModel(self.baseModel)
-self.listView.setModel(self.lazyItemModel)
+2. Implementation\
+    Typically when implementing the [*QListView*](https://doc.qt.io/qtforpython-5/PySide2/QtWidgets/QListView.html) you simply create a baseModel and pass it to the [*QListView*](https://doc.qt.io/qtforpython-5/PySide2/QtWidgets/QListView.html). Basically you do the same thing here but add the *LazyItemModel* in between as shown below:
 
-self.lazyItemModel.setVisible(0, 150)
-```
-As visible in the implementation above not only the *QListView* is passed to the *baseModel* but the items that should be displayed aswell. Because of that the *baseModel* should be modified that you can pass the items directly to the init. We recommend to derive from the [*QtCore.QAbstractListModel*](https://doc.qt.io/qtforpython-5/PySide2/QtCore/QAbstractListModel.html).
+    <img src="https://github.com/monal-im/LazyLoadingQListView/assets/76741977/6ea8ef46-1651-44f6-b312-dd787e43bd2c" alt="Structure" width="400"/>
 
-The elements are automatically made visible when scrolling but if you jump to a position not visible yet, you have to set the items visible with [setVisible(start, end)](#setVisible).
+    ```python
+    # configure models
+    self.listView = QtWidgets.QListView()
+    self.baseModel = BaseModel(self.listView)
+    self.lazyItemModel = LazyItemModel(self.baseModel)
+    self.listView.setModel(self.lazyItemModel)
+    ```
+
+    The base model can be any model that you can normally use by implementing the [*QListView*](https://doc.qt.io/qtforpython-5/PySide2/QtWidgets/QListView.html). It can even be a different proxy model. As a base model we have used the [*QAbstractListModel*](https://doc.qt.io/qtforpython-5/PySide2/QtCore/QAbstractListModel.html) in the [*DebugTools*](https://github.com/monal-im/DebugTools).
+
+    Don't forget to make the first few items visible so that the *LazyItemModel* can work properly.
+
+    ```python
+    self.lazyItemModel.setVisible(0, 150)
+    ```
+
+    We also reimplemented the [*QAbstractListModel*](https://doc.qt.io/qtforpython-5/PySide2/QtCore/QAbstractListModel.html) so that we can pass the elements directly to the baseModel, but it is not necessary to make it work. It may have a slight performance increase since it doesn't have to go through the *LazyItemModel* first.
+
+    ```python
+    self.listView = QtWidgets.QListView()
+    self.baseModel = BaseModel(items, self.listView) #<-- Items are passed directly to the baseModel
+    self.lazyItemModel = LazyItemModel(self.baseModel)
+    self.listView.setModel(self.lazyItemModel)
+
+    self.lazyItemModel.setVisible(0, 150)
+    ```
+
+    Our BaseModel implementation can be found in the examples foler.
+
+    ##
+
+    To jump rows we recommend to define a function that sets the row (*_setCurrentRow*).\
+    
+    ```python
+        def _setCurrentRow(self, row):
+            index = self.lazyItemModel.createIndex(row, 0)
+            with self.lazyItemModel.triggerScrollChanges():
+                start = self.lazyItemModel.mapFromSource(self.lazyItemModel.createIndex(max(0, row-LOAD_CONTEXT), 0)).row()
+                end = self.lazyItemModel.mapFromSource(self.lazyItemModel.createIndex(min(row+LOAD_CONTEXT, self.lazyItemModel.rowCount(None)), 0)).row()
+                self.lazyItemModel.setVisible(start, end)
+
+                self.uiWidget_listView.setCurrentIndex(self.lazyItemModel.mapFromSource(index))
+    ```
+
+    The __with__ statement may seem strange, but it prevents any scrollbar movement when new items are added and is mistakenly confused with user input from affecting the loading or jumping process.
+
+    __mapFromSource__ ensures that the correct index is used.
+
+    After defining that you can use it without any problem:
+
+    ```python
+        self._setCurrentRow(x)
+    ```
+
+    Once everything is implemented it should run smoothly.
 
 ## Functions
+These are the functions provided by the *LazyItemModel*
 [__init__(sourceModel, parent=None)](#init)\
 [__layoutAboutToBeChangedHandler__()](#layoutAboutToBeChangedHandler)\
 [__layoutChangedHandler__()](#layoutChangedHandler)\
@@ -55,11 +106,11 @@ The elements are automatically made visible when scrolling but if you jump to a 
 ##
 #### init
 arguments: (sourceModel, parent=None)\
-This function initializes the *LazyItemModel* and takes a *sourceModel* which can be the *baseModel* or an additional *proxyModel*. The parent is None by default and is just used to initialize the model.
+This function initializes the *LazyItemModel* and takes a *sourceModel*, which can be the *baseModel* or an additional *proxyModel*. The parent defaults to None and is only used to initialize the model.
 
 ##
 #### layoutAboutToBeChangedHandler
-This function can be called before changing the layout. It saves the current position that can be set again with __layoutChangedHandler()__.This function is automatically called when the *sourceModel* emits __layoutAboutToBeChanged__.
+This function can be called before changing the layout. It saves the current position, which can be set again using __layoutChangedHandler()__. This function is automatically called when the *sourceModel* emits __layoutAboutToBeChanged__.
 
 ##
 #### layoutChangedHandler
@@ -68,40 +119,40 @@ This function can be called after the current position is set with __layoutAbout
 ##
 #### setVisible
 arguments: (start = int, end = int)\
-This function sets a range of items visible.
+This function makes a range of items visible.
 
 ##
 #### scrollbarMovedHandler
-This function can be used, if you want to manually want to make sure everything is loaded properly. It is automatically called when the value of the vertical scrollbar changed.
+This function can be used if you want to manually make sure everything loads properly. It will be called automatically when the value of the vertical scrollbar changes.
 
 ##
 #### triggerScrollChanges
-This function is used to prevent loading of new lines when it is not used by a user. E.g. loading more rows.
+This function is used to prevent new rows from loading when not in use by a user. E.g. loading additional lines.
 
 ##
 #### parent
 arguments: (index)\
-Returns the parent. The index given to the function isn't used but is required by Qt.
+This function returns the parent. The index passed to the function is not used, but is required by Qt.
 
 ##
 #### mapFromSource
 arguments: (sourceIndex)\
-This function converts the realIndex to the proxyIndex. The realIndex is the index returned by the *baseModel* and can differ to the indexes provided by the *listView*.
+This function converts the realIndex to the proxyIndex. The realIndex is the index returned by the *baseModel* and may be different from the indexes provided by the *listView*.
 
 ##
 #### mapToSource
 arguments: (proxyIndex)\
-This function converts the proxyIndex to the realIndex. The proxyIndex is the index returned by the *listView*, it can differ from the realIndex, because of parts that aren't loaded yet.
+This function converts the proxyIndex to the realIndex. The proxyIndex is the index returned by *listView*. It may differ from the realIndex due to parts not yet loaded.
 
 ##
 #### rowCount
 arguments: (index)\
-This function returns the rowCount. The index given to the function isn't used but is required by Qt.
+This function returns the rowCount. The index passed to the function is not used, but is required by Qt.
 
 ##
 #### columnCount
 arguments: (index)\
-This function returns the columnCount. The index given to the function isn't used but is required by Qt.
+This function returns the ColumnCount. The index passed to the function is not used, but is required by Qt.
 
 ##
 #### listView
