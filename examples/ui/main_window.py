@@ -26,7 +26,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.lazyItemModel = LazyItemModel(self.baseModel)
         self.uiWidget_listView.setModel(self.lazyItemModel)
         self.lazyItemModel.setVisible(0, LOAD_CONTEXT)
-        self.lazyItemModel.setVisible(500, 1550)
         self._setCurrentRow(1100)
 
     def _setCurrentRow(self, row):
