@@ -63,45 +63,24 @@ If you are processing large amounts of data that you want to display in a [*QLis
 
     ##
 
-    To jump rows we recommend to define a function that sets the row (*_setCurrentRow*).\
-    
-    ```python
-        def _setCurrentRow(self, row):
-            index = self.lazyItemModel.createIndex(row, 0)
-            with self.lazyItemModel.triggerScrollChanges():
-                start = self.lazyItemModel.mapFromSource(self.lazyItemModel.createIndex(max(0, row-LOAD_CONTEXT), 0)).row()
-                end = self.lazyItemModel.mapFromSource(self.lazyItemModel.createIndex(min(row+LOAD_CONTEXT, self.lazyItemModel.rowCount(None)), 0)).row()
-                self.lazyItemModel.setVisible(start, end)
-
-                self.uiWidget_listView.setCurrentIndex(self.lazyItemModel.mapFromSource(index))
-    ```
-
-    The __with__ statement may seem strange, but it prevents any scrollbar movement when new items are added and is mistakenly confused with user input from affecting the loading or jumping process.
-
-    __mapFromSource__ ensures that the correct index is used.
-
-    After defining that you can use it without any problem:
+    Jumping to rows is easy by simply using the existing setCurrentRow function. The function requires the index you want to switch to. It automatically sets the lines visible and switches to the given line.
 
     ```python
-        self._setCurrentRow(x)
+        self.lazyItemModel.setCurrentRow(x)
     ```
-
-    Once everything is implemented it should run smoothly.
 
 ## Functions
 These are the functions provided by the *LazyItemModel*
+
 [__init__(sourceModel, parent=None)](#init)\
-[__layoutAboutToBeChangedHandler__()](#layoutAboutToBeChangedHandler)\
-[__layoutChangedHandler__()](#layoutChangedHandler)\
 [__setVisible__(start, end)](#setVisible)\
-[__scrollbarMovedHandler__()](#scrollbarMovedHandler)\
-[__triggerScrollChanges__()](#triggerScrollChanges)\
-[__parent__(index)](#parent)\
+[__setCurrentRow__(row)](#setCurrentRow)
+
+
 [__mapFromSource__(sourceIndex)](#mapFromSource)\
 [__mapToSource__(proxyIndex)](#mapToSource)\
 [__rowCount__(index)](#rowCount)\
-[__columnCount__(index)](#columnCount)\
-[__listView__()](#listView)
+[__columnCount__(index)](#columnCount)
 
 ##
 #### init
@@ -109,30 +88,13 @@ arguments: (sourceModel, parent=None)\
 This function initializes the *LazyItemModel* and takes a *sourceModel*, which can be the *baseModel* or an additional *proxyModel*. The parent defaults to None and is only used to initialize the model.
 
 ##
-#### layoutAboutToBeChangedHandler
-This function can be called before changing the layout. It saves the current position, which can be set again using __layoutChangedHandler()__. This function is automatically called when the *sourceModel* emits __layoutAboutToBeChanged__.
-
-##
-#### layoutChangedHandler
-This function can be called after the current position is set with __layoutAboutToBeChangedHandler()__ and the layout has changed. This function is automatically called when the *sourceModel* emits __layoutChanged__.
-
-##
 #### setVisible
 arguments: (start = int, end = int)\
 This function makes a range of items visible.
 
 ##
-#### scrollbarMovedHandler
-This function can be used if you want to manually make sure everything loads properly. It will be called automatically when the value of the vertical scrollbar changes.
-
-##
-#### triggerScrollChanges
-This function is used to prevent new rows from loading when not in use by a user. E.g. loading additional lines.
-
-##
-#### parent
-arguments: (index)\
-This function returns the parent. The index passed to the function is not used, but is required by Qt.
+#### setCurrentRow
+This function needs the line (int) you want to go to
 
 ##
 #### mapFromSource
@@ -154,6 +116,3 @@ This function returns the rowCount. The index passed to the function is not used
 arguments: (index)\
 This function returns the ColumnCount. The index passed to the function is not used, but is required by Qt.
 
-##
-#### listView
-This function returns the *listView*.
