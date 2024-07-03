@@ -26,15 +26,5 @@ class MainWindow(QtWidgets.QMainWindow):
         self.lazyItemModel = LazyItemModel(self.baseModel)
         self.uiWidget_listView.setModel(self.lazyItemModel)
         self.lazyItemModel.setVisible(0, LOAD_CONTEXT)
-        self._setCurrentRow(1100)
-
-    def _setCurrentRow(self, row):
-        index = self.lazyItemModel.createIndex(row, 0)
-        logger.info(f"Setting row {row} to index {index.row()}")
-        #self.uiWidget_listView.scrollTo(index, hint=QtWidgets.QAbstractItemView.PositionAtCenter)
-        with self.lazyItemModel.triggerScrollChanges():
-            start = self.lazyItemModel.mapFromSource(self.lazyItemModel.createIndex(max(0, row-LOAD_CONTEXT), 0)).row()
-            end = self.lazyItemModel.mapFromSource(self.lazyItemModel.createIndex(min(row+LOAD_CONTEXT, self.lazyItemModel.rowCount(None)), 0)).row()
-            self.lazyItemModel.setVisible(start, end)
-
-            self.uiWidget_listView.setCurrentIndex(self.lazyItemModel.mapFromSource(index))
+        
+        self.lazyItemModel.setCurrentRow(1100)

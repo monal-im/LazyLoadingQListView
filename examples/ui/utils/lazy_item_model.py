@@ -8,6 +8,7 @@ logger = logging.getLogger(__name__)
 
 LAZY_DISTANCE = 400
 LAZY_LOADING = 100
+LOAD_CONTEXT = 150
 
 class LazyItemModel(QtCore.QAbstractProxyModel):
     class ChangeTriggeredFlag:
@@ -145,3 +146,11 @@ class LazyItemModel(QtCore.QAbstractProxyModel):
     @functools.lru_cache(typed=True)
     def listView(self):
         return self.sourceModel().listView()
+
+    def setCurrentRow(self, row):
+        index = self.createIndex(row, 0)
+        logger.info(f"Setting row {row} to index {index.row()}")
+        with self.triggerScrollChanges():
+            self.setVisible(max(row-LOAD_CONTEXT, 0), min(row+LOAD_CONTEXT, self.sourceModel().rowCount(None)))
+
+            self.listView().setCurrentIndex(self.mapFromSource(index))
