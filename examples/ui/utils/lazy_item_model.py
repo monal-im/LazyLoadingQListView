@@ -19,13 +19,14 @@ class LazyItemModel(QtCore.QAbstractProxyModel):
         def __exit__(self, type, value, traceback):
             self.model.triggeredProgramatically = False
 
-    def __init__(self, sourceModel, parent=None):
+    def __init__(self, sourceModel, listView, loadRows=150, parent=None):
         super().__init__(parent)
         self.setSourceModel(sourceModel)
         self.proxyData = ProxyData(self)
+        self.listView = listView
 
         self.triggeredProgramatically = False
-        self.listView().verticalScrollBar().valueChanged.connect(self.scrollbarMovedHandler)
+        self.listView.verticalScrollBar().valueChanged.connect(self.scrollbarMovedHandler)
         self.sourceModel().layoutAboutToBeChanged.connect(self.layoutAboutToBeChangedHandler)
         self.sourceModel().layoutChanged.connect(self.layoutChangedHandler)
 
@@ -44,13 +45,16 @@ class LazyItemModel(QtCore.QAbstractProxyModel):
         for signal in signals:
             getattr(sourceModel, signal).connect(functools.partial(emitter, signal))
 
+        if loadRows != None:
+            self.setVisible(0, loadRows)
+
     def layoutAboutToBeChangedHandler(self, *args):
         # the topIndex is needed to restore our scroll position after triggering a lazy loading by scrolling up
-        self.topIndex     = self.mapToSource(self.listView().indexAt(self.listView().viewport().contentsRect().topLeft()))
+        self.topIndex     = self.mapToSource(self.listView.indexAt(self.listView.viewport().contentsRect().topLeft()))
         
         # save current selected index, to be restored later on
         # use sourceModel indexes because they stay stable even when we insert rows in this model
-        self.currentIndexBefore = self.mapToSource(self.listView().currentIndex())
+        self.currentIndexBefore = self.mapToSource(self.listView.currentIndex())
 
     def layoutChangedHandler(self, *args):
         # timer function to be called once the loading completed
@@ -59,10 +63,10 @@ class LazyItemModel(QtCore.QAbstractProxyModel):
             if self.currentIndexBefore.isValid():
                 toProxyIndex = self.mapFromSource(self.currentIndexBefore)
                 logger.debug(f"Resetting selected index to correct one: {self.currentIndexBefore.row() = }, {toProxyIndex.row() = }")
-                self.listView().setCurrentIndex(toProxyIndex)
+                self.listView.setCurrentIndex(toProxyIndex)
             
             # scroll to item that was at viewport top *before* we inserted stuff
-            self.listView().scrollTo(self.mapFromSource(self.topIndex), hint=QtWidgets.QAbstractItemView.PositionAtTop)
+            self.listView.scrollTo(self.mapFromSource(self.topIndex), hint=QtWidgets.QAbstractItemView.PositionAtTop)
             
             self.triggeredProgramatically = False
         
@@ -87,8 +91,8 @@ class LazyItemModel(QtCore.QAbstractProxyModel):
         if self.triggeredProgramatically != False:
             return
         
-        topIndex     = self.mapToSource(self.listView().indexAt(self.listView().viewport().contentsRect().topLeft()))
-        bottomIndex  = self.mapToSource(self.listView().indexAt(self.listView().viewport().contentsRect().bottomLeft()))
+        topIndex     = self.mapToSource(self.listView.indexAt(self.listView.viewport().contentsRect().topLeft()))
+        bottomIndex  = self.mapToSource(self.listView.indexAt(self.listView.viewport().contentsRect().bottomLeft()))
 
         previousIndex = self.proxyData.getPreviousIndexWithState(topIndex, False)
         if previousIndex != None and topIndex.row() - previousIndex <= LAZY_DISTANCE:
@@ -142,10 +146,6 @@ class LazyItemModel(QtCore.QAbstractProxyModel):
     @functools.lru_cache(typed=True)
     def columnCount(self, index):
         return self.sourceModel().columnCount(index)
-    
-    @functools.lru_cache(typed=True)
-    def listView(self):
-        return self.sourceModel().listView()
 
     def setCurrentRow(self, row):
         index = self.createIndex(row, 0)
@@ -153,4 +153,4 @@ class LazyItemModel(QtCore.QAbstractProxyModel):
         with self.triggerScrollChanges():
             self.setVisible(max(row-LOAD_CONTEXT, 0), min(row+LOAD_CONTEXT, self.sourceModel().rowCount(None)))
 
-            self.listView().setCurrentIndex(self.mapFromSource(index))
+            self.listView.setCurrentIndex(self.mapFromSource(index))
