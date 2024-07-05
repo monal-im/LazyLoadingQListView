@@ -35,31 +35,17 @@ If you are processing large amounts of data that you want to display in a [*QLis
     ```python
     # configure models
     self.listView = QtWidgets.QListView()
-    self.baseModel = BaseModel(self.listView)
-    self.lazyItemModel = LazyItemModel(self.baseModel)
+    self.baseModel = BaseModel()
+    self.lazyItemModel = LazyItemModel(self.baseModel, self.listView, 150)
     self.listView.setModel(self.lazyItemModel)
     ```
 
-    The base model can be any model that you can normally use by implementing the [*QListView*](https://doc.qt.io/qtforpython-5/PySide2/QtWidgets/QListView.html). It can even be a different proxy model. As a base model we have used the [*QAbstractListModel*](https://doc.qt.io/qtforpython-5/PySide2/QtCore/QAbstractListModel.html) in the [*DebugTools*](https://github.com/monal-im/DebugTools).
+    The *baseModel* can be any model of your choice as long as the [*QListView*](https://doc.qt.io/qtforpython-5/PySide2/QtWidgets/QListView.html) is able to use it. It can even be a different proxy model.
 
-    Don't forget to make the first few items visible so that the *LazyItemModel* can work properly.
+    When initializing the *LazyItemModel*, you have the option of passing a number as a third option to make the first items visible directly. If nothing is passed, the first 150 items are set to Visible. You can also pass __None__ and nothing will be set as visible.
 
-    ```python
-    self.lazyItemModel.setVisible(0, 150)
-    ```
-
-    We also reimplemented the [*QAbstractListModel*](https://doc.qt.io/qtforpython-5/PySide2/QtCore/QAbstractListModel.html) so that we can pass the elements directly to the baseModel, but it is not necessary to make it work. It may have a slight performance increase since it doesn't have to go through the *LazyItemModel* first.
-
-    ```python
-    self.listView = QtWidgets.QListView()
-    self.baseModel = BaseModel(items, self.listView) #<-- Items are passed directly to the baseModel
-    self.lazyItemModel = LazyItemModel(self.baseModel)
-    self.listView.setModel(self.lazyItemModel)
-
-    self.lazyItemModel.setVisible(0, 150)
-    ```
-
-    Our BaseModel implementation can be found in the examples foler.
+    A complete example (including a simple base model) can be found in the examples folder.
+    Another good example is the [*DebugTools*](https://github.com/monal-im/DebugTools) from Monal, where the *LazyItemModel* is already used.
 
     ##
 
